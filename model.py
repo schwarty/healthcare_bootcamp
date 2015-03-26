@@ -63,8 +63,8 @@ if __name__ == '__main__':
         'percentile': [50, 60, 80],
         }
 
-    grid = GridSearchCV(clf, param_grid=param_grid, scoring='roc_auc')
+    grid = GridSearchCV(clf, param_grid=param_grid, scoring='roc_auc', n_jobs=-1)
     grid.fit(X, y)
 
-    scores = cross_val_score(grid, X, y, cv=cv, scoring='roc_auc', n_jobs=-1)
+    scores = cross_val_score(grid, X, y, cv=cv, scoring='roc_auc')
     print np.mean(scores)
