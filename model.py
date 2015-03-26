@@ -87,8 +87,8 @@ class AveragingEnsemble(BaseEstimator, ClassifierMixin):
 
 def Classifier():
     
-    rf = MeetForester(random_state=random_state)
-    lr = MeetLogistic(random_state=random_state)
+    rf = MeetForester()
+    lr = MeetLogistic()
 
     clf = AveragingEnsemble([rf, lr])
     return clf
