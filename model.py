@@ -79,6 +79,7 @@ class AveragingEnsemble(BaseEstimator, ClassifierMixin):
         return self.classes_.take(np.argmax(self.predict_proba(X), axis=1), axis=0)
 
 
+Classifier = AveragingEnsemble
 
 if __name__ == '__main__':
     import pandas as pd
