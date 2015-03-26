@@ -79,12 +79,6 @@ class AveragingEnsemble(BaseEstimator, ClassifierMixin):
         return self.classes_.take(np.argmax(self.predict_proba(X), axis=1), axis=0)
 
 
-    rf = MeetForester(random_state=random_state)
-    lr = MeetLogistic(random_state=random_state)
-
-    clf = AveragingEnsemble([rf, lr])
-
-
 def Classifier():
     
     rf = MeetForester()
@@ -104,14 +98,16 @@ if __name__ == '__main__':
     y = df['TARGET'].values
     X = df.drop('TARGET', axis=1).values
 
-    random_state = 0
+    clf = Classifier()
 
-    rf = MeetForester(random_state=random_state)
-    lr = MeetLogistic(random_state=random_state)
+    # random_state = 0
 
-    clf = AveragingEnsemble([rf, lr])
+    # rf = MeetForester(random_state=random_state)
+    # lr = MeetLogistic(random_state=random_state)
 
-    cv = StratifiedShuffleSplit(y, n_iter=5, random_state=random_state)
+    # clf = AveragingEnsemble([rf, lr])
+
+    cv = StratifiedShuffleSplit(y, n_iter=5, random_state=None)
 
     # param_grid = {
     #     'C': np.logspace(-2, 2, 5),
