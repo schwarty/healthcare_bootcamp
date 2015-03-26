@@ -65,7 +65,7 @@ class MeetLogistic(BaseEstimator, ClassifierMixin):
 
 class AveragingEnsemble(BaseEstimator, ClassifierMixin):
     def __init__(self, base_estimators):
-        self.base_estimators = estimators
+        self.base_estimators = base_estimators
 
     def fit(self, X, y):
         self.classes_ = np.unique(y)
