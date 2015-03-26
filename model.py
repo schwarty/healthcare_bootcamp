@@ -1,36 +1,44 @@
 import numpy as np
 
-from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.base import TransformerMixin
-from sklearn import clone
-
-from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
-from sklearn.preprocessing import Imputer
-from sklearn.preprocessing import StandardScaler
-from sklearn.feature_selection import SelectPercentile, f_classif, RFECV
-from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
-from sklearn.pipeline import Pipeline
-from sklearn.externals.joblib import Parallel, delayed
-from sklearn.ensemble import BaggingClassifier
+from sklearn.feature_selection import SelectPercentile, f_classif
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import Imputer, StandardScaler
 from sklearn.cross_validation import cross_val_score, StratifiedShuffleSplit
+from sklearn.pipeline import Pipeline
+from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn import clone
+from sklearn.grid_search import GridSearchCV
 
 
+class RandomForestAndLogistic(BaseEstimator, ClassifierMixin):
 
-def model(X_train, y_train, X_test):
-    clf = model_spec()
-    clf.fit(X_train, y_train)
-    y_pred = clf.predict(X_test)
-    y_score = clf.predict_proba(X_test)
-    return y_pred, y_score
-        
+    def __init__(self, C=1., penalty='l2', percentile=60, n_estimators=100, n_jobs=1, random_state=None):
+        self.C = C
+        self.penalty = penalty
+        self.percentile = percentile
+        self.n_estimators = n_estimators
+        self.n_jobs = n_jobs
+        self.random_state = random_state
 
-def model_spec():
-        return Pipeline([('imputer', Imputer(strategy='most_frequent')),
-                         ('scaler', StandardScaler()),
-                         ('select', SelectPercentile(f_classif, 85)),
-                         ('clf', BaggingClassifier(LogisticRegression(C=.01, penalty='l2'), n_estimators=100,
-                                                   bootstrap_features=True, n_jobs=-1)),
-                      ])
+        self.base_estimator = Pipeline([
+            # ('imputer_mean', Imputer(strategy='mean')),
+            ('imputer_most_frequent', Imputer(strategy='most_frequent')),
+            ('select', SelectPercentile(f_classif, percentile)),
+            ('rf', RandomForestClassifier(n_estimators=n_estimators, n_jobs=n_jobs, random_state=random_state)),
+            ('scaler', StandardScaler()),
+            ('clf', LogisticRegression(C=C, penalty=penalty, class_weight='auto', random_state=random_state)),
+        ])
+
+    def fit(self, X, y):
+        self.estimator_ = clone(self.base_estimator).fit(X, y)
+        return self
+
+    def predict(self, X):
+        return self.estimator_.predict(X)
+
+    def predict_proba(self, X):
+        return self.estimator_.predict_proba(X)
 
 
 if __name__ == '__main__':
@@ -43,14 +51,20 @@ if __name__ == '__main__':
     y = df['TARGET'].values
     X = df.drop('TARGET', axis=1).values
 
-    clf = Pipeline([('imputer', Imputer(strategy='most_frequent')),
-                         ('scaler', StandardScaler()),
-                         ('select1', SelectPercentile(f_classif, 60)),
-                         ('select2', RFECV(LogisticRegression(C=.01, penalty='l2', class_weight='auto'), scoring='roc_auc')),
-                         ('clf', LogisticRegression(C=.01, penalty='l2', class_weight='auto')),
-                      ])
+    random_state = 0
 
-    cv = StratifiedShuffleSplit(y, n_iter=5, random_state=0)
+    clf = RandomForestAndLogistic(random_state=random_state)
+    cv = StratifiedShuffleSplit(y, n_iter=5, random_state=random_state)
 
-    scores = cross_val_score(clf, X, y, cv=cv, scoring='roc_auc', n_jobs=-1)
+    param_grid = {
+        'C': np.logspace(-2, 2, 5),
+        'penalty': ['l1', 'l2'],
+        'n_estimators': [50, 100, 300],
+        'percentile': [50, 60, 80],
+        }
+
+    grid = GridSearchCV(clf, param_grid=param_grid, scoring='roc_auc')
+    grid.fit(X, y)
+
+    scores = cross_val_score(grid, X, y, cv=cv, scoring='roc_auc', n_jobs=-1)
     print np.mean(scores)
