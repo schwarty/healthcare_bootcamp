@@ -41,6 +41,24 @@ class RandomForestAndLogistic(BaseEstimator, ClassifierMixin):
         return self.estimator_.predict_proba(X)
 
 
+
+class AveragingEnsemble(BaseEstimator, ClassifierMixin):
+    def __init__(self, base_estimators):
+        self.base_estimators = estimators
+
+    def fit(self, X, y):
+        self.classes_ = np.unique(y)
+        self.estimators_ = [clone(e).fit(X, y) for e in self.base_estimators]
+        return self
+
+    def predict_proba(self, X):
+        return np.vstack([e.predict_proba(X)[np.newaxis] for e in self.estimators_]).mean(axis=0)
+
+    def predict(self, X):
+        return self.classes_.take(np.argmax(self.predict_proba(X), axis=1), axis=0)
+
+
+
 if __name__ == '__main__':
     import pandas as pd
 
