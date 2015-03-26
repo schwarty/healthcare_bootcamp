@@ -108,5 +108,5 @@ if __name__ == '__main__':
     # grid = GridSearchCV(clf, param_grid=param_grid, scoring='roc_auc', n_jobs=-1)
     # grid.fit(X, y)
 
-    scores = cross_val_score(clf, X, y, cv=cv, scoring='roc_auc')
+    scores = cross_val_score(clf, X, y, cv=cv, scoring='roc_auc', n_jobs=-1)
     print np.mean(scores)
